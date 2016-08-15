@@ -1,0 +1,107 @@
+Jika category nya 'Redeem Points'
+
+- From --> email user
+- to --> Hijup
+- point --> jumlah point yang digunakan (bernilai negatif)
+- detail --> code order
+- order_id --> order ID
+- owner id --> User ID pengguna redeem point
+
+drop table point_redeem_from_2015;
+create table point_redeem_from_2015 as
+select * from point_histories 
+where 
+  category = 'Redeem Points' and
+  date(created_at+INTERVAL'7 hour') >= '2015-01-01'
+
+
+==================
+Jika category nya 'Received From'
+
+- From --> email user pengirim
+- to --> email user penerima
+- point --> Jumlah point yang dikirim (bernilai positif)
+- detail --> keterangan 
+- order_id --> kosong
+- owner id --> User ID penerima
+
+drop table point_receivedfrom_from_2015;
+create table point_receivedfrom_from_2015 as
+select * from point_histories 
+where 
+  category = 'Received From' and
+  date(created_at+INTERVAL'7 hour') >= '2015-01-01'
+
+==============================
+
+untuk dapatin point yang dikasih hijup dari review submission
+drop table point_receivedfrom_from_hijup_2015;
+create table point_receivedfrom_from_hijup_2015 as
+select * from point_histories 
+where 
+  category = 'Received From' and
+  date(created_at+INTERVAL'7 hour') >= '2015-01-01' and
+  detail like 'FREE%'
+
+==================================
+Jika category nya 'Tranfer To'
+
+- From --> email user pengirim
+- to --> email user penerima
+- point --> Jumlah point yang dikirim (bernilai negatif)
+- detail --> keterangan 
+- order_id --> kosong
+- owner id --> User ID pengirim
+
+drop table point_transferto_from_2015;
+create table point_transferto_from_2015 as
+select 
+  * 
+from 
+  point_histories 
+where 
+  category = 'Transfer To' and 
+  owner_type != 'Admin' and
+  date(created_at+INTERVAL'7 hour') >= '2015-01-01'
+===================================
+
+select 
+  a.from as pengirim,
+  a.to as penerima,
+  a.owner_id as id_pengirim,
+  b.owner_id as id_penerima,
+  a.point as point_dikirim,
+  b.point as point_diterima,
+  to_char(a.created_at, 'YYYY-MM-DD HH24:MI:SS') as created_at_kirim,
+  to_char(b.created_at, 'YYYY-MM-DD HH24:MI:SS') as created_at_terima
+from 
+  point_transferto_from_2015 a 
+inner join 
+  point_receivedfrom_from_2015 b 
+    on a.from = b.from and a.to = b.to and to_char(a.created_at, 'YYYY-MM-DD HH24:MI:SS') = to_char(b.created_at, 'YYYY-MM-DD HH24:MI:SS')
+
+===================================
+Final Query get data point
+
+select 
+  a.owner_id as id_pengirim,
+  b.owner_id as id_penerima,
+  ABS(b.point) as point
+from 
+  point_transferto_from_2015 a 
+inner join 
+  point_receivedfrom_from_2015 b 
+    on a.from = b.from and a.to = b.to and to_char(a.created_at, 'YYYY-MM-DD HH24:MI:SS') = to_char(b.created_at, 'YYYY-MM-DD HH24:MI:SS')
+
+select 
+  a.owner_id as id_pengirim,
+  a.to as id_penerima,
+  ABS(a.point) as point
+from point_redeem_from_2015 a
+
+select 
+  a.from as id_pengirim,
+  a.owner_id as id_penerima,
+  ABS(a.point) as point
+from 
+  point_receivedfrom_from_hijup_2015 a
