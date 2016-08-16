@@ -26,7 +26,23 @@ cur = conn.cursor()
 
 ############################
 query = """
-  select a.from, a.to, ABS(a.point) from point_redeem_from_2015 a
+  select
+  id_pengirim,
+  id_penerima,
+  count(*) as freq,
+  sum(point) as total
+from
+(
+  select 
+    a.from as id_pengirim,
+    a.owner_id as id_penerima,
+    ABS(a.point) as point
+  from 
+    point_receivedfrom_from_hijup_2015 a
+
+) as foo
+group by id_pengirim, id_penerima
+order by total desc
 """
 
 cur.execute(query)
@@ -35,19 +51,21 @@ datas = cur.fetchall()
 
 for data in datas:
   print data[0], ",",
-  print data[1]
+  print data[1], ",",
+  print data[2], ",",
+  print data[3]
 #############################
-query = """
-  select a.from, a.to, a.point from point_receivedfrom_from_2015 a where detail not like 'FREE%'
-"""
+# query = """
+#   select a.from, a.to, a.point from point_receivedfrom_from_2015 a where detail not like 'FREE%'
+# """
 
-cur.execute(query)
-datas = cur.fetchall()
+# cur.execute(query)
+# datas = cur.fetchall()
 
 
-for data in datas:
-  print data[0], ",",
-  print data[1]
+# for data in datas:
+#   print data[0], ",",
+#   print data[1]
 #############################
 # query = """
 #   select a.from, a.to, a.point from point_order_from_2015 a

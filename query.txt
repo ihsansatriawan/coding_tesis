@@ -105,3 +105,59 @@ select
   ABS(a.point) as point
 from 
   point_receivedfrom_from_hijup_2015 a
+
+========
+
+select
+  id_pengirim,
+  id_penerima,
+  count(*) as freq,
+  sum(point) as total
+from
+(
+  select 
+    a.from as id_pengirim,
+    a.owner_id as id_penerima,
+    ABS(a.point) as point
+  from 
+    point_receivedfrom_from_hijup_2015 a
+
+) as foo
+group by id_pengirim, id_penerima
+order by total desc
+
+select
+  id_pengirim,
+  id_penerima,
+  count(*) as freq,
+  sum(point) as total
+from
+(
+  select 
+    a.owner_id as id_pengirim,
+    a.to as id_penerima,
+    ABS(a.point) as point
+  from point_redeem_from_2015 a
+) as foo
+group by id_pengirim, id_penerima
+order by freq desc
+
+select
+  id_pengirim,
+  id_penerima,
+  count(*) as freq,
+  sum(point) as total
+from
+(
+  select 
+    a.owner_id as id_pengirim,
+    b.owner_id as id_penerima,
+    ABS(b.point) as point
+  from 
+    point_transferto_from_2015 a 
+  inner join 
+    point_receivedfrom_from_2015 b 
+      on a.from = b.from and a.to = b.to and to_char(a.created_at, 'YYYY-MM-DD HH24:MI:SS') = to_char(b.created_at, 'YYYY-MM-DD HH24:MI:SS')
+) as foo
+group by id_pengirim, id_penerima
+order by freq desc
