@@ -19,6 +19,7 @@ import psycopg2
 import pyfpgrowth
 import sys
 import traceback
+import math
 style.use("ggplot")
 
 
@@ -34,14 +35,25 @@ def sim(user1, user2):
   query = """
     select freq, total from tesis_point_user where id_pengirim=%s and id_penerima=%s
   """
+  
   cur.execute(query, [user1, user2])
-  vector_user_1 = cur.fetchall()
+  if cur.rowcount == 0:
+    vector_user_1 = [0,0]
+  else:  
+    vector_user_1 = cur.fetchall()
   print "vector_user_1: ", vector_user_1
 
   cur.execute(query, [user2, user1])
-  vector_user_2 = cur.fetchall()
+  if cur.rowcount == 0:
+    vector_user_2 = [0,0]
+  else:  
+    vector_user_2 = cur.fetchall()
   print "vector_user_2: ", vector_user_2
-  return (1 - spatial.distance.cosine(vector_user_1, vector_user_2))
+
+  cosine_similarity = 1 - spatial.distance.cosine(vector_user_1, vector_user_2)
+  if math.isnan(cosine_similarity):
+    return 0.0
+  return cosine_similarity
 
 def getUserSimilarity():
   conn = psycopg2.connect(database="hijub_db_2016", user="postgres", password="hijup-ihsan", host="127.0.0.1", port="5432")
@@ -168,7 +180,7 @@ def getUserSimilarity():
 def main(argv):
 
   # getUserSimilarity()
-  print sim("Hijup", "46865")
+  print sim("Hijup", "65415")
 
 if __name__ == "__main__":
   sys.exit(main(sys.argv))
