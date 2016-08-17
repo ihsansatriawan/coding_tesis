@@ -20,6 +20,7 @@ import pyfpgrowth
 import sys
 import traceback
 import math
+import time
 style.use("ggplot")
 
 
@@ -35,25 +36,65 @@ def sim(user1, user2):
   query = """
     select freq, total from tesis_point_user where id_pengirim=%s and id_penerima=%s
   """
-  
+
   cur.execute(query, [user1, user2])
   if cur.rowcount == 0:
     vector_user_1 = [0,0]
   else:  
     vector_user_1 = cur.fetchall()
-  print "vector_user_1: ", vector_user_1
+  # print "vector_user_1: ", vector_user_1
 
   cur.execute(query, [user2, user1])
   if cur.rowcount == 0:
     vector_user_2 = [0,0]
   else:  
     vector_user_2 = cur.fetchall()
-  print "vector_user_2: ", vector_user_2
+  # print "vector_user_2: ", vector_user_2
 
   cosine_similarity = 1 - spatial.distance.cosine(vector_user_1, vector_user_2)
   if math.isnan(cosine_similarity):
     return 0.0
   return cosine_similarity
+
+def user_pair():
+  start_time = time.time()
+  query = """
+    select id_pengirim, id_penerima from tesis_point_user
+  """
+
+  query_pengirim = """
+    select distinct id_pengirim from tesis_point_user
+  """
+
+  cur.execute(query_pengirim)
+  pengirim = cur.fetchall()  
+
+  query_penerima = """
+    select distinct id_penerima from tesis_point_user
+  """
+  
+  cur.execute(query_penerima)
+  penerima = cur.fetchall()  
+
+  users = list(set(pengirim+penerima))
+
+  for x in users:
+    for user in users:
+      if sim(x[0], user[0]) != 0.0:
+        print x[0],",",user[0],",", sim(x[0], user[0])
+  # print("--- %s seconds ---" % (time.time() - start_time))
+  # a = [1,2,3]
+  # b = [3,4,5,6]
+  # c = list(set(a+b))
+
+  # cur.execute(query)
+  # users = cur.fetchall()
+  # for user in users:
+  #   if sim(user[0], user[1]) != 0.0:
+  #     print user[0], user[1], ": ", sim(user[0], user[1])
+
+
+
 
 def getUserSimilarity():
   conn = psycopg2.connect(database="hijub_db_2016", user="postgres", password="hijup-ihsan", host="127.0.0.1", port="5432")
@@ -180,7 +221,18 @@ def getUserSimilarity():
 def main(argv):
 
   # getUserSimilarity()
-  print sim("Hijup", "65415")
+  # print sim("63879", "35365")
+  user_pair()
+  # for user in users:
+  #   print user[0]
+
+  # a = [1,2,3]
+  # b = [3,4,5,6]
+  # c = list(set(a+b))
+  # for i in range(len(c)):
+  #   if i != (len(c)-1):
+  #     print c[i],
+  #     print c[i+1]
 
 if __name__ == "__main__":
   sys.exit(main(sys.argv))
