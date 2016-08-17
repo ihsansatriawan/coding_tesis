@@ -77,12 +77,16 @@ def user_pair():
   penerima = cur.fetchall()  
 
   users = list(set(pengirim+penerima))
+  for pair in combinations(users,2):
+    if sim(pair[0],pair[1]) != 0.0:
+      print pair[0][0],",",pair[1][0],",", sim(pair[0][0],pair[1][0])
+  # for x in users:
+  #   for user in users:
+  #     if sim(x[0], user[0]) != 0.0:
+  #       print x[0],",",user[0],",", sim(x[0], user[0])
 
-  for x in users:
-    for user in users:
-      if sim(x[0], user[0]) != 0.0:
-        print x[0],",",user[0],",", sim(x[0], user[0])
-  # print("--- %s seconds ---" % (time.time() - start_time))
+
+  print("--- %s seconds ---" % (time.time() - start_time))
   # a = [1,2,3]
   # b = [3,4,5,6]
   # c = list(set(a+b))
