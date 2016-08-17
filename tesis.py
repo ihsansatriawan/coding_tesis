@@ -21,10 +21,27 @@ import sys
 import traceback
 style.use("ggplot")
 
+
+conn = psycopg2.connect(database="hijub_db_2016", user="postgres", password="hijup-ihsan", host="127.0.0.1", port="5432")
+cur = conn.cursor()
+
 def pct_rank_qcut(series, n):
     edges = pd.Series([float(i) / n for i in range(n + 1)])
     f = lambda x: (edges >= x).argmax()
     return series.rank(pct=1).apply(f)
+
+def sim(user1, user2):
+  query = """
+    select freq, total from tesis_point_user where id_pengirim=%s and id_penerima=%s
+  """
+  cur.execute(query, [user1, user2])
+  vector_user_1 = cur.fetchall()
+  print "vector_user_1: ", vector_user_1
+
+  cur.execute(query, [user2, user1])
+  vector_user_2 = cur.fetchall()
+  print "vector_user_2: ", vector_user_2
+  return (1 - spatial.distance.cosine(vector_user_1, vector_user_2))
 
 def getUserSimilarity():
   conn = psycopg2.connect(database="hijub_db_2016", user="postgres", password="hijup-ihsan", host="127.0.0.1", port="5432")
@@ -50,7 +67,6 @@ def getUserSimilarity():
   """)
 
   point_from_hijup = cur.fetchall()
-  print len(point_from_hijup)
 
   cur.execute("""
   select
@@ -71,7 +87,6 @@ def getUserSimilarity():
   """)
 
   point_redeem = cur.fetchall()
-  print len(point_redeem)
 
   cur.execute("""
   select
@@ -95,23 +110,65 @@ def getUserSimilarity():
   """)
 
   point_to_from = cur.fetchall()
-  print len(point_to_from)
 
   data_point = point_from_hijup + point_redeem + point_to_from
-  print len(data_point)
+  # data = [
+  #   ('1', '2', 8, 10),
+  #   ('2', '1', 2, 7),
+  #   ('4', '3', 3, 9),
+  #   ('3', '4', 5, 6)
+  # ]
+  # print data
+  # df = pd.DataFrame(data, columns=['id_pengirim', 'id_penerima', 'freq', 'total'])
+  # print df
+  # print len(data_point)
   df = pd.DataFrame(data_point, columns=['id_pengirim', 'id_penerima', 'freq', 'total'])
-  print df
-  # df = df.sort_values(['unique_id'], ascending=[True])
 
+  query_delete = "DROP table tesis_point_user;"
+  cur.execute(query_delete)
+  conn.commit()
+  engine = create_engine('postgresql://postgres@localhost:5432/hijub_db_2016')
+  df.to_sql('tesis_point_user', engine)
+  # print df
+  # df = df.set_index(['id_pengirim', 'id_penerima'])
+  
+  # print df[['freq', 'total']]
   # pt = df.pivot(index='unique_id', columns='category_product', values='count').fillna(0)
+  # print df.pivot(index='id_penerima')
   # combos = combinations(pt.index, 2)
   # results = [(a, b, 1 - spatial.distance.cosine(pt.ix[a].values, pt.ix[b].values)) for a, b in combos]
+
+  # pt = pd.pivot_table(df, index=['id_pengirim','id_penerima'], aggfunc='sum')
+  # print pt
+
+  # pt = df.pivot(index='id_pengirim', columns='id_penerima', values='total').fillna(0)
+  # print pt
+  # combos = combinations(pt.index, 2)
+
+  # results = [(a, b, 1 - spatial.distance.cosine(pt.ix[a].values, pt.ix[b].values)) for a, b in combos]
+  # print results
+
+  # csv.register_dialect(
+  #   'mydialect',
+  #   delimiter = ',',
+  #   quotechar = '"',
+  #   doublequote = True,
+  #   skipinitialspace = True,
+  #   lineterminator = '\r\n',
+  #   quoting = csv.QUOTE_MINIMAL)
+
+  # with open('userSimilarity.csv', 'w') as mycsvfile:
+  #   thedatawriter = csv.writer(mycsvfile, dialect='mydialect')
+  #   for row in results:
+  #     if row[2] > 0.0:
+  #       thedatawriter.writerow((row[0], row[1]))
 
 
 
 def main(argv):
 
-  getUserSimilarity()
+  # getUserSimilarity()
+  print sim("Hijup", "46865")
 
 if __name__ == "__main__":
   sys.exit(main(sys.argv))
