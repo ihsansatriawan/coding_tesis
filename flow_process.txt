@@ -1,0 +1,69 @@
+======Step 1======> praProcess() *tesis.py
+Tabel Perapihan data point menjadi 4 tabel ini :
+
+point_receivedfrom_from_hijup_2015
+point_redeem_from_2015
+point_transferto_from_2015
+point_receivedfrom_from_2015
+
+jelaskan masing masing tabel menggambarkan kondisi apa
+
+output Step 1 ==> Tabel tesis_point_user ==> tabel dengan kolom ==> 'id_pengirim', 'id_penerima', 'freq', 'total'
+==============================
+
+
+====Step 2==== userSimilarity() *tesis.py
+input step 2 ==> tabel tesis_point_user
+
+melakukan perhitungan euclidean similarity untuk setiap user id yang ada di tabel tesis_point_user
+lalu dilakukan transformasi agar sequence (kasih contoh)
+
+
+output step 2 ===> File csv "user_similarity_with_transform.csv" berisi pairing user id (id e-commerce diubah jadi 1) 
+lalu dilakukan transformasi agar nilai user id nya sequence (requirement library GN)
+
+====================================
+
+=====Step 3====== *community.py
+input step 3 ===> "user_similarity_with_transform.csv"
+
+melakukan proses deteksi komunitas menggunakan GN algo, lalu dipilih jumlah komunitas dengan 
+nilai modularity paling baik
+
+output step 3 ===> "output.csv"
+
+================================
+
+========Step 4===== * save_result_com_detection() customer_segmentation.py
+input step 4 ==> "output.csv"
+
+Remapping balik dari id yang ditransformasi menjadi id user yang sesungguhnya
+
+output step 4 ===> tabel result_community_detection, dengan kolom ==> id (id yang sudah direverse sebelum di transformasi) 
+dan community keberapa
+
+========================
+
+======Step 5 ======= get_rfm() customer_segmentation.py
+input step 5 ===> nomor komunitas keberapa yang akan didapatkan nilai rfm dari user yang menjadi anggota nya
+
+melakukan proses normalisasi nilai RFM menjadi skala [1-5]
+
+output step 5 ===> tabe customer_rfm
+
+===================
+
+
+======Step 6===== customer_segment() customer_segmentation.py
+input step 6 ===> tabel customer_rfm
+
+melakukan proses segmentasi menggunakan K-Means, lalu memilikih nilai K
+based on nilai silhouette yang paling baik
+
+output step 6 ==> visualisasi dan tabel customer_segment
+
+
+
+
+
+

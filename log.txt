@@ -1,0 +1,178 @@
+
+[
+  (78112 , 'Hijup' , 0.981883371633),
+  (78112 , '3' , 0.981883371633),
+  (63260 , 'Hijup' , 0.983245354782),
+  (10346 , 'Hijup' , 0.982194031509),
+  ('Hijup' , 2 , 0.982590620415),
+  (71563 , 'Hijup' , 0.981981005453),
+  (41460 , 'Hijup' , 0.981802252888)
+]
+
+
+[
+  (89, 146, 0.08),
+  (146, 89, 0.08),
+  (102, 89, 0.08),
+  (102, 89, 0.08),
+  (102, 89, 0.08),
+]
+
+
+d = [
+  (1,70399,0.988375133622),
+  (1,33919,0.981573492596),
+  (1,62461,0.981426807114),
+  (579,1,0.983018778374),
+  (745,1,0.995580488899),
+  (834,1,0.980942505189)
+]
+
+df = pd.DataFrame(d, columns=['source', 'target', 'weight'])
+df.source = (df.source.diff() != 0).cumsum() - 1
+
+
+select * from point_receivedfrom_from_nohijup_2015
+
+select * from users limit 10
+
+select 
+  a.id as id_pengirim, b.owner_id as id_penerima, b.point
+from 
+  users a
+inner join
+  point_receivedfrom_from_nohijup_2015 b
+    on a.email = b.from
+
+select * from point_transferto_from_2015
+
+select 
+  b.owner_id as id_pengirim, a.id as id_penerima, ABS(b.point)
+from 
+  users a
+inner join
+  point_transferto_from_2015 b
+    on a.email = b.to
+    
+select * from point_transferto_from_2015
+
+
+ select
+    id_pengirim,
+    id_penerima,
+    count(*) as freq,
+    sum(point) as total
+  from
+  (
+    select 
+      a.from as id_pengirim,
+      a.owner_id as id_penerima,
+      ABS(a.point) as point
+    from 
+      point_receivedfrom_from_hijup_2015 a
+
+  ) as foo
+  group by id_pengirim, id_penerima
+
+
+  select
+  id_pengirim,
+  id_penerima,
+  count(*) as freq
+from
+(
+  select 
+    a.id as id_pengirim, b.owner_id as id_penerima, b.point
+  from 
+    users a
+  inner join
+    point_receivedfrom_from_nohijup_2015 b
+      on a.email = b.from
+) as foo
+group by id_pengirim, id_penerima
+
+
+select
+  id_pengirim,
+  id_penerima,
+  count(*) as freq
+from
+(
+  select 
+    b.owner_id as id_pengirim, a.id as id_penerima, ABS(b.point)
+  from 
+    users a
+  inner join
+    point_transferto_from_2015 b
+      on a.email = b.to
+) as foo
+group by id_pengirim, id_penerima
+
+select * from tesis_point_user where id_pengirim='21061' and id_penerima='45191'
+
+drop table agg_tesis_point_user;
+create table agg_tesis_point_user as
+select
+  id_pengirim,
+  id_penerima,
+  cast((sum(freq)) as bigint) as freq
+from
+(
+  select id_pengirim, id_penerima, freq from tesis_point_user
+) as foo
+group by id_pengirim, id_penerima
+
+select * from agg_tesis_point_user where id_pengirim='78596' and id_penerima='78112'
+
+drop table tmp_data_point;
+create table tmp_data_point as
+select
+  cast(id_pengirim as int),
+  cast(id_penerima as int),
+  count(*) as freq
+from
+(
+  select 
+    a.id as id_pengirim, b.owner_id as id_penerima, b.point
+  from 
+    users a
+  inner join
+    point_receivedfrom_from_nohijup_2015 b
+      on a.email = b.from
+) as foo
+group by id_pengirim, id_penerima
+
+select * from tmp_data_point
+
+INSERT INTO tmp_data_point (id_pengirim, id_penerima, freq)
+select
+  cast(id_pengirim as int),
+  cast(id_penerima as int),
+  count(*) as freq
+from
+(
+  select 
+    b.owner_id as id_pengirim, a.id as id_penerima, ABS(b.point)
+  from 
+    users a
+  inner join
+    point_transferto_from_2015 b
+      on a.email = b.to
+) as foo
+group by id_pengirim, id_penerima
+
+drop table tesis_point_user;
+create table tesis_point_user as
+select
+  id_pengirim,
+  id_penerima,
+  cast((sum(freq)) as bigint) as freq
+from
+(
+  select id_pengirim, id_penerima, freq from tmp_data_point
+) as foo
+group by id_pengirim, id_penerima
+
+
+select * from tmp_data_point where id_pengirim = '29167' and id_penerima='19568'
+select * from tesis_point_user where id_pengirim = 29167 and id_penerima=19568
