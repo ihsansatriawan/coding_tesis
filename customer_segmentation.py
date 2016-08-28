@@ -20,6 +20,7 @@ import pyfpgrowth
 import sys
 import traceback
 style.use("ggplot")
+import time
 
 conn = psycopg2.connect(database="hijub_db_2016", user="postgres", password="hijup-ihsan", host="127.0.0.1", port="5432")
 cur = conn.cursor()
@@ -74,8 +75,9 @@ def save_result_com_detection():
   engine = create_engine('postgresql://postgres@localhost:5432/hijub_db_2016')
   df_id_origin.to_sql('result_community_detection', engine)
 
-def get_rfm(num_community):
-  print num_community
+def get_rfm():
+  start_time = time.time()
+  print "masuk get_rfm"
   query="""
     select 
       user_id,
@@ -100,15 +102,17 @@ def get_rfm(num_community):
       orders.state IN ('confirmed','packed','delivered') AND 
       user_id is not null AND
       user_id IN (
-       select id from result_community_detection where community = %s
+       select id from result_community_detection
       )
     group by 
       user_id
     order by monetary desc
   """
-  cur.execute(query, [num_community])
-
+  cur.execute(query)
+  print "done cur.execute"
   datas = cur.fetchall()
+  print "done fetchall"
+  print("---fetchall:  %s seconds ---" % (time.time() - start_time))
   df = pd.DataFrame(datas, columns=['userid', 'recency', 'frequency', 'monetary'])
   print df
   df['recency'] = df['recency'].astype(float)
@@ -136,7 +140,7 @@ def customer_segment():
 
   df_X = pd.DataFrame(X, columns=['userid', 'recency', 'frequency', 'monetary'])
   print df_X
-  range_n_clusters = [2, 3, 4]
+  range_n_clusters = [3, 4, 5, 6, 7, 8, 9]
   best_silhouette_score = 0.0
   best_n_cluster = 0
   for n in range_n_clusters:
@@ -167,11 +171,11 @@ def customer_segment():
   for cluster_number in range(cluster_num):
     print("Cluster {} contains {} samples".format(cluster_number, c[cluster_number]))
 
-  query_delete = "DROP table customer_segment;"
-  cur.execute(query_delete)
-  conn.commit()
-  engine = create_engine('postgresql://postgres@localhost:5432/hijub_db_2016')
-  df_X.to_sql('customer_segment', engine)
+  
+  print "df_X"
+  print df_X
+
+  
   #visualize 3 dimension
   plot_df = df_X[df_X.columns[1:5]]
   color = ["b", "g", "r", "c", "m", "y", "k", "w"]
@@ -189,15 +193,39 @@ def customer_segment():
   plt.show()
   
   # visualize 2 dimension
-  # pca_2 = PCA(2)
-  # plot_columns = pca_2.fit_transform(df_X[df_X.columns[1:]])
+  pca_2 = PCA(2)
+  plot_columns = pca_2.fit_transform(df_X[df_X.columns[1:]])
 
-  # plt.scatter(x=plot_columns[:,0], y=plot_columns[:,1], c=df_X["cluster"])
-  # plt.show()
+  plt.scatter(x=plot_columns[:,0], y=plot_columns[:,1], c=df_X["cluster"])
+  plt.show()
+
+  ##########
+  query_result_community = """
+    select id, community from result_community_detection
+  """
+  cur.execute(query_result_community)
+  data_result_community = cur.fetchall()
+  df_result_community = pd.DataFrame(data_result_community, columns=['id', 'community'])
+
+  print "df_result_community"
+  print df_result_community
+
+  df_combine = pd.merge(df_X, df_result_community, left_on='userid', right_on='id')
+  print df_combine
+  df_X['community'] = df_combine['community']
+  print df_X
+
+
+  query_delete = "DROP table customer_segment;"
+  cur.execute(query_delete)
+  conn.commit()
+  engine = create_engine('postgresql://postgres@localhost:5432/hijub_db_2016')
+  df_X.to_sql('customer_segment', engine)
 
 def main(argv):
   # save_result_com_detection()
-  get_rfm("41")
+  # get_rfm("41")
+  get_rfm()
   customer_segment()
 
 if __name__ == "__main__":
